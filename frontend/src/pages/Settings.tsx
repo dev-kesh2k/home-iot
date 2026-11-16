@@ -203,7 +203,7 @@ function PasswordForm({ onDone }: { onDone: () => void }) {
         <input className={inputCls} type="password" autoComplete="current-password" required value={currentPassword} onChange={(e) => setCurrent(e.target.value)} />
       </Field>
       <Field label="Nova senha (mín. 8)">
-        <input className={inputCls} type="password" autoComplete="new-password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input className={inputCls} type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
       </Field>
       <button className="mt-2 w-full rounded-xl bg-brand py-3 font-semibold text-white">Alterar senha</button>
     </form>
@@ -332,7 +332,7 @@ function UsersPanel() {
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Senha inicial">
-            <input className={inputCls} minLength={6} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <input className={inputCls} minLength={8} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </Field>
           <Field label="Permissão">
             <select className={inputCls} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
