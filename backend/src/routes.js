@@ -7,6 +7,7 @@ import { ACTION_OPS, runAutomation } from './automations.js';
 import { energySummary } from './energy.js';
 import { getWeather, geocode } from './weather.js';
 import { haConfigured, haFetch, listEntities } from './ha.js';
+import { createLoginLimiter } from './login-limit.js';
 
 export const api = Router();
 
@@ -21,23 +22,21 @@ function publicHome(h) {
 api.get('/health', (_req, res) => res.json({ ok: true }));
 
 // ---------- Autenticação ----------
-const attempts = new Map();
+// Limite de tentativas (por IP+e-mail e por IP); a limpeza roda a cada 10 min.
+const loginLimit = createLoginLimiter();
+setInterval(() => loginLimit.sweep(), 10 * 60_000).unref();
 api.post(
   '/auth/login',
   wrap(async (req, res) => {
     const email = str(req.body?.email).toLowerCase();
     const password = String(req.body?.password ?? '');
-    const key = `${req.ip}|${email}`;
-    const a = attempts.get(key) || { n: 0, until: 0 };
-    if (a.until > Date.now()) throw new HttpError(429, 'Muitas tentativas. Aguarde alguns minutos.');
+    loginLimit.check(req.ip, email);
     const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      a.n += 1;
-      if (a.n >= 5) Object.assign(a, { n: 0, until: Date.now() + 5 * 60000 });
-      attempts.set(key, a);
+      loginLimit.fail(req.ip, email);
       throw new HttpError(401, 'E-mail ou senha incorretos');
     }
-    attempts.delete(key);
+    loginLimit.success(req.ip, email);
     res.json({ token: signToken(user), user: publicUser(user) });
   }),
 );
