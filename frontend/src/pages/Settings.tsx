@@ -202,7 +202,7 @@ function PasswordForm({ onDone }: { onDone: () => void }) {
       <Field label="Senha atual">
         <input className={inputCls} type="password" autoComplete="current-password" required value={currentPassword} onChange={(e) => setCurrent(e.target.value)} />
       </Field>
-      <Field label="Nova senha (mín. 6)">
+      <Field label="Nova senha (mín. 8)">
         <input className={inputCls} type="password" autoComplete="new-password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
       </Field>
       <button className="mt-2 w-full rounded-xl bg-brand py-3 font-semibold text-white">Alterar senha</button>
@@ -297,7 +297,7 @@ function UsersPanel() {
               className="p-1 text-slate-400"
               title="Redefinir senha"
               onClick={() => {
-                const p = prompt(`Nova senha para ${u.name} (mín. 6):`);
+                const p = prompt(`Nova senha para ${u.name} (mín. 8):`);
                 if (p) act(() => api.put(`/users/${u.id}`, { password: p }), 'Senha redefinida');
               }}
             >
