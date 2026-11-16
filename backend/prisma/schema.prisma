@@ -1,0 +1,110 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("member")
+  lastSeenAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+}
+
+model Home {
+  id             Int      @id @default(1)
+  name           String   @default("Minha Casa")
+  address        String   @default("")
+  city           String   @default("São Paulo")
+  latitude       Float?
+  longitude      Float?
+  securityArmed  Boolean  @default(false)
+  tariff         Float    @default(0.95)
+  haUrl          String?
+  haToken        String?
+  updatedAt      DateTime @updatedAt
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String
+  image     String   @default("")
+  sort      Int      @default(0)
+  devices   Device[]
+  createdAt DateTime @default(now())
+}
+
+model Device {
+  id         String    @id @default(cuid())
+  name       String
+  type       String
+  roomId     String?
+  room       Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  on         Boolean   @default(false)
+  brightness Int       @default(70)
+  lightMode  String    @default("warm")
+  temp       Int       @default(24)
+  acMode     String    @default("Frio")
+  fanSpeed   String    @default("Média")
+  swing      String    @default("Auto")
+  powerW     Float     @default(10)
+  haEntityId String?
+  onSince    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model EnergyLog {
+  id       String @id @default(cuid())
+  deviceId String
+  type     String
+  day      String
+  wh       Float  @default(0)
+
+  @@unique([deviceId, day])
+  @@index([day])
+}
+
+model Automation {
+  id              String    @id @default(cuid())
+  title           String
+  category        String    @default("Casa")
+  icon            String    @default("moon")
+  enabled         Boolean   @default(true)
+  triggerType     String
+  triggerTime     String?
+  triggerDays     String    @default("0123456")
+  triggerDeviceId String?
+  triggerState    String?
+  triggerTemp     Float?
+  actions         Json      @default("[]")
+  lastRunAt       DateTime?
+  lastRunKey      String?
+  createdAt       DateTime  @default(now())
+}
+
+// Garante que só uma réplica da API rode o agendador por vez.
+model Lease {
+  name   String   @id
+  holder String
+  until  DateTime
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  title     String
+  detail    String   @default("")
+  kind      String   @default("info")
+  deviceId  String?
+  userName  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
