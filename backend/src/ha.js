@@ -1,5 +1,7 @@
 // Integração com o Home Assistant (REST API + token de longa duração).
 import { getHome } from './db.js';
+import { AC_MODE, FAN } from './ha-map.js';
+export { stateToPatch } from './ha-map.js';
 
 export class HaError extends Error {}
 
@@ -34,10 +36,6 @@ export async function haFetch(home, path, { method = 'GET', body, raw = false, t
 
 const callService = (home, domain, service, data) => haFetch(home, `/api/services/${domain}/${service}`, { method: 'POST', body: data });
 
-const AC_MODE = { Frio: 'cool', Ventilar: 'fan_only', Seco: 'dry', Auto: 'auto' };
-const AC_MODE_BACK = Object.fromEntries(Object.entries(AC_MODE).map(([k, v]) => [v, k]));
-const FAN = { Baixa: 'low', Média: 'medium', Alta: 'high' };
-const FAN_BACK = Object.fromEntries(Object.entries(FAN).map(([k, v]) => [v, k]));
 
 /** Envia o estado do dispositivo para a entidade vinculada no Home Assistant. */
 export async function pushToHa(device) {
@@ -68,33 +66,6 @@ export async function pushToHa(device) {
       return callService(home, 'camera', device.on ? 'turn_on' : 'turn_off', { entity_id }).catch(() => {});
     default:
       return callService(home, 'homeassistant', device.on ? 'turn_on' : 'turn_off', { entity_id });
-  }
-}
-
-/** Converte o estado de uma entidade do HA nos campos do dispositivo. */
-export function stateToPatch(device, st) {
-  if (!st || st.state === 'unavailable' || st.state === 'unknown') return null;
-  const a = st.attributes || {};
-  const domain = device.haEntityId.split('.')[0];
-  switch (domain) {
-    case 'light': {
-      const patch = { on: st.state === 'on' };
-      if (st.state === 'on' && typeof a.brightness === 'number') patch.brightness = Math.max(1, Math.round((a.brightness / 255) * 100));
-      return patch;
-    }
-    case 'climate': {
-      const patch = { on: st.state !== 'off' };
-      if (typeof a.temperature === 'number') patch.temp = Math.round(a.temperature);
-      if (AC_MODE_BACK[st.state]) patch.acMode = AC_MODE_BACK[st.state];
-      if (FAN_BACK[a.fan_mode]) patch.fanSpeed = FAN_BACK[a.fan_mode];
-      return patch;
-    }
-    case 'lock':
-      return { on: st.state === 'locked' };
-    case 'camera':
-      return { on: true };
-    default:
-      return { on: ['on', 'playing', 'open', 'home'].includes(st.state) };
   }
 }
 
