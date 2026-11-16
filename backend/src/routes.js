@@ -60,7 +60,7 @@ api.put(
       if (!(await bcrypt.compare(String(req.body.currentPassword ?? ''), req.user.passwordHash))) {
         throw new HttpError(400, 'Senha atual incorreta');
       }
-      if (String(req.body.password).length < 6) throw new HttpError(400, 'A nova senha precisa ter ao menos 6 caracteres');
+      if (String(req.body.password).length < 8) throw new HttpError(400, 'A nova senha precisa ter ao menos 8 caracteres');
       data.passwordHash = await bcrypt.hash(String(req.body.password), 10);
     }
     try {
@@ -406,7 +406,7 @@ api.post(
     const name = str(req.body.name);
     const password = String(req.body.password ?? '');
     if (!name || !/^\S+@\S+\.\S+$/.test(email)) throw new HttpError(400, 'Informe nome e e-mail válidos');
-    if (password.length < 6) throw new HttpError(400, 'A senha precisa ter ao menos 6 caracteres');
+    if (password.length < 8) throw new HttpError(400, 'A senha precisa ter ao menos 8 caracteres');
     try {
       const user = await prisma.user.create({
         data: { name, email, role: req.body.role === 'admin' ? 'admin' : 'member', passwordHash: await bcrypt.hash(password, 10) },
@@ -430,7 +430,7 @@ api.put(
       data.role = req.body.role === 'admin' ? 'admin' : 'member';
     }
     if (req.body.password) {
-      if (String(req.body.password).length < 6) throw new HttpError(400, 'A senha precisa ter ao menos 6 caracteres');
+      if (String(req.body.password).length < 8) throw new HttpError(400, 'A senha precisa ter ao menos 8 caracteres');
       data.passwordHash = await bcrypt.hash(String(req.body.password), 10);
     }
     res.json({ user: publicUser(await prisma.user.update({ where: { id: req.params.id }, data })) });
