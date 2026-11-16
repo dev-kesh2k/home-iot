@@ -5,12 +5,8 @@ import { runDeviceTriggers } from './automations.js';
 export const DEFAULT_POWER = { light: 9, ac: 1200, tv: 120, plug: 500, lock: 2, camera: 5 };
 export const TYPES = Object.keys(DEFAULT_POWER);
 
-export class HttpError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-}
+export { HttpError } from './errors.js';
+import { HttpError } from './errors.js';
 
 /** Potência efetiva (W): luzes consomem proporcional ao brilho. */
 function effectiveWatts(d) {
